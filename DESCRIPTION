@@ -1,9 +1,12 @@
 Package: jag1
-Title: What the Package Does (one line, title case)
+Title: Analysis of jag1 and its effect on lung cancer outcomes
 Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: person("Dan", "Spakowicz", email = "daniel.spakowicz@osumc.org", role = c("aut", "cre"))
+Description: This package contains all of the files and analyses in the study of the effect of jag1 on lung cancer outcomes.
 Depends: R (>= 3.4.4)
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Imports: bookdown
+Suggests: 
+    testthat
