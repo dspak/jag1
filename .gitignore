@@ -1,4 +1,10 @@
 .Rproj.user
 .Rhistory
 .RData
-.Ruserdata
+
+# Text files (Mostly data from estimate)
+*.txt
+
+# Figure images
+.png
+.pdf

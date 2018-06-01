@@ -1,0 +1,98 @@
+---
+title: "exploratory-deconvolution"
+author: "Daniel Spakowicz"
+date: "5/31/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+if (!require("install.load")) {
+  install.packages("install.load")
+  library(install.load)
+}
+
+# CRAN packages
+list.of.packages <- c("tidyverse")
+
+install.load::install_load(list.of.packages)
+```
+
+```{r}
+load("../../analysis/data/raw_data/cgds_clin-expr.Rdata")
+
+# Reduce size of expression data name
+names(expression.data) <- gsub("_tcga.*", "", names(expression.data))
+```
+
+```{r timer deconvolution}
+timer <- read.table("../../analysis/data/raw_data/timer_immune-estimation.txt",
+                    sep = "\t", header = T)
+```
+
+Do the `barcode` labels in the timer data match the tcga sample ids?
+
+```{r}
+lapply(expression.data, function(x) sum(x %in% timer$barcode))
+```
+No, they don't. 
+
+```{r estimate}
+# Create vector of files
+e.files <- list.files(path = "../../analysis/data/raw_data/estimate/tables/",
+                      full.names = TRUE)
+# Read files into list
+e <- lapply(e.files, function(x) read.table(x, sep = "\t", header = TRUE))
+# Rename list elements
+names(e) <- gsub("../.*tables//(.*)_RNAseqV2.txt",
+                 "\\1", 
+                 e.files)
+
+e[[1]]$ID %in% expression.data[[1]]$bcr_patient_barcode
+```
+
+Great!
+
+```{r}
+# Create cancer designation column and convert to dataframe
+# as a function, since I have to do it for two lists
+name_and_bind <- function(input.list) {
+  for (i in 1:length(input.list)) {
+    input.list[[i]]$cancer <- names(input.list)[i]
+  }
+  out <- do.call(rbind, input.list) %>%
+    data.frame  
+  
+  return(out)
+}
+
+e_df <- name_and_bind(e)
+j_df <- name_and_bind(expression.data)
+
+e_df <- e_df %>%
+  plyr::rename(c(ID = "bcr_patient_barcode"))
+
+
+
+est <- inner_join(e_df, j_df, by = "bcr_patient_barcode")
+```
+
+
+```{r}
+est$jag1.bin <- ifelse(est$JAG1 > quantile(est$JAG1, 0.66), "high", "low")
+
+est %>%
+  gather(score, value, ends_with("score")) %>%
+  ggplot() +
+  geom_boxplot(aes(x = jag1.bin, y = value)) +
+  facet_wrap(~score)
+  
+
+```
+
+# To Do
+
+* Why are there so few name matches??!! (~600)
+* Create a cancer-type-specific threshold (right now it's global quantile 0.66)
+* Break out by tumor type
